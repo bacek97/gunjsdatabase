@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html>
-
+<head>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2009491185555386"
+     crossorigin="anonymous"></script>
+</head>
 <body>
     <div id="player"></div>
-    <button onClick="player.playVideo()">play</button>
-    <button onClick="player.pauseVideo()">pause</button>
+    <!-- <button onClick="gun.get('film1').get('PlayerState').put(1)">play</button>
+    <button onClick="player.pauseVideo()">pause</button> -->
 
     <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gun/nts.js"></script>
     <script>
         const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
         // 2. This code loads the IFrame Player API code asynchronously.
@@ -35,15 +39,18 @@
         function onPlayerReady(event) {
             console.log("ready")
             event.target.playVideo();
+            synced = true;
             gun.get('film1').get('PlayerState').on((state) => {
                 if (state == YT.PlayerState.PAUSED) {
+                    synced = true;
+                    player.pauseVideo()
+                }
+                if (state == YT.PlayerState.PLAYING && synced == true) {
+                    synced = false;
                     gun.get('film1').get('time').once(function (number) {
                         player.seekTo(number)
-                        player.pauseVideo()
                     })
-                }
-                if (state == YT.PlayerState.PLAYING) {
-                    player.playVideo()
+                    player.playVideo();
                 }
             }).off
         }
@@ -51,16 +58,12 @@
         // 5. The API calls this function when the player's state changes.
         //    The function indicates that when playing a video (state=1),
         //    the player should play for six seconds and then stop.
-        var done = false;
         function onPlayerStateChange(event) {
             console.log(event.data)
             gun.get('film1').get('PlayerState').put(event.data)
-            if (event.data == YT.PlayerState.PAUSED) {
+            if (event.data == YT.PlayerState.PLAYING) {
                 gun.get('film1').get('time').put(player.getCurrentTime());
             }
-        }
-        function stopVideo() {
-            player.stopVideo();
         }
         
     </script>
@@ -93,10 +96,11 @@
                     <ul>{time}</ul>
                     <form onSubmit={e => {
                         e.preventDefault();
-                        gun.get('film1').get('time').put(newTodo.current.value);
-                        newTodo.current.value = ''
+                        // gun.get('film1').get('time').put(newTodo.current.value);
+                        player.loadVideoById(newTodo.current.value)
+                        // newTodo.current.value = ''
                     }}>
-                        <input ref={newTodo} placeholder="new todo" />
+                        <input ref={newTodo} placeholder="new videoId" />
                     </form>
                 </div>
             );
